@@ -15,6 +15,10 @@ function M.setup(input)
       require('windows.autowidth').enable()
    end
 
+   if config.autoheight.enable then
+      require('windows.autoheight').enable()
+   end
+
    require('windows.commands')
 end
 

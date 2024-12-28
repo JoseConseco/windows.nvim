@@ -17,6 +17,13 @@ local config = {
          help = 2,
       },
    },
+   autoheight = {
+      enable = true, -- false
+      winheight = 5,
+      filetype = {
+         help = 2,
+      },
+   },
    ignore = {
       buftype = { 'quickfix' },
       filetype = {

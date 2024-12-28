@@ -190,6 +190,104 @@ function Frame:autowidth(curwinLeaf)
    end
 end
 
+---Calculate frame heights for autoheight functionality.
+---@param curwinLeaf win.Frame
+function Frame:autoheight(curwinLeaf)
+   local curwin = curwinLeaf.win
+
+   local curwinFrame = self:get_child_with_frame(curwinLeaf)
+
+   if self.type == 'row' then
+      local height = self.new_height
+      for _, frame in ipairs(self.children) do
+         frame.new_height = height
+         if frame.type ~= 'leaf' then
+            if frame == curwinFrame then
+               frame:autoheight(curwinLeaf)
+            else
+               frame:equalize_windows(false, true)
+            end
+         end
+      end
+   elseif self.type == 'col' then
+      local room = self.new_height
+      local topFrame_leafs = self:get_longest_column()
+
+      local totwincount = #topFrame_leafs
+
+      -- Exclude fixed height frames from consideration.
+      for _, frame in ipairs(self.children) do
+         if frame ~= curwinFrame and frame:is_fixed_height() then
+            local height = frame:get_height()
+            frame.new_height = height
+            room = room - height - 1
+            frame:equalize_windows(false, true)
+
+            totwincount = totwincount - #frame:get_longest_column()
+         end
+      end
+
+      local curwin_wanted_height = curwin:get_wanted_height()
+      local wanted_height = curwinFrame:get_min_height(curwin, curwin_wanted_height)
+
+      local n = #curwinFrame:get_longest_column()
+      local N = totwincount
+      local owed_height = round((room - N + 1) * n / N + n - 1)
+
+      totwincount = totwincount - n
+
+      local height = (wanted_height > owed_height) and wanted_height or owed_height
+
+      -- Remove unnecessary windows "breathing", i.e. changing size in few cells.
+      if curwinFrame.type == 'leaf' then
+         local curwin_height = curwin:get_height()
+         if curwin_height - THRESHOLD < height and height <= curwin_height + THRESHOLD then
+            height = curwin_height
+         end
+      end
+
+      curwinFrame.new_height = height
+      room = room - height - 1
+      if curwinFrame.type ~= 'leaf' then
+         curwinFrame:autoheight(curwinLeaf)
+      end
+
+      ---All children frames that are not curwinFrame and not fixed height.
+      local other_frames = {} ---@type win.Frame[]
+      for _, frame in ipairs(self.children) do
+         if frame ~= curwinFrame and not frame:is_fixed_height() then
+            table.insert(other_frames, frame)
+         end
+      end
+
+      local Nf = #other_frames
+      for i, frame in ipairs(other_frames) do
+         if i == Nf then
+            frame.new_height = room
+         else
+            local n = #frame:get_longest_column()
+            local N = totwincount
+            local h = round((room - N + 1) * n / N + n - 1)
+            if frame.type == 'leaf' then
+               -- Remove unnecessary windows "breathing", i.e. changing size in
+               -- few cells.
+               local win_height = frame.win:get_height()
+               if win_height - THRESHOLD < h and h <= win_height + THRESHOLD then
+                  h = win_height
+               end
+            end
+            frame.new_height = h
+            room = room - h - 1
+            totwincount = totwincount - n
+         end
+         if frame.type ~= 'leaf' then
+            frame:equalize_windows(false, true)
+         end
+      end
+   end
+end
+
+
 ---@param winLeaf win.Frame
 ---@param do_width boolean
 ---@param do_height boolean

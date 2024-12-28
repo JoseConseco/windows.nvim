@@ -2,7 +2,7 @@ local Frame = require('windows.lib.frame')
 local merge_resize_data = require('windows.lib.resize-windows').merge_resize_data
 local M = {}
 
----Calculate layout for auotwidth
+---Calculate layout for autowidth
 ---@param curwin win.Window
 ---@return win.WinResizeData[]
 function M.autowidth(curwin)
@@ -31,15 +31,38 @@ function M.autowidth(curwin)
    end
 
    local data = topFrame:get_data_for_width_resizing()
+   return data
+end
 
-   -- --------------------------------------------------------
-   -- local t = {};
-   -- for _, d in ipairs(data) do
-   --    t[#t+1] = string.format('%d : %d', d.win.id, d.width)
-   -- end
-   -- print(table.concat(t, ' | '))
-   -- --------------------------------------------------------
+---Calculate layout for autoheight
+---@param curwin win.Window
+---@return win.WinResizeData[]
+function M.autoheight(curwin)
+   local topFrame = Frame() ---@type win.Frame
+   if topFrame.type == 'leaf' then
+      return {}
+   end
 
+   if curwin:is_valid()
+      and not curwin:is_floating()
+      and not curwin:get_option('winfixheight')
+      and not curwin:is_ignored()
+   then
+      local curwinLeaf = topFrame:find_window(curwin)
+      local topFrame_height = topFrame:get_height()
+      local curwin_wanted_height = curwin:get_wanted_height()
+      local topFrame_wanted_height = topFrame:get_min_height(curwin, curwin_wanted_height)
+
+      if topFrame_wanted_height > topFrame_height then
+         topFrame:maximize_window(curwinLeaf, false, true)
+      else
+         topFrame:autoheight(curwinLeaf)
+      end
+   else
+      topFrame:equalize_windows(false, true)
+   end
+
+   local data = topFrame:get_data_for_height_resizing()
    return data
 end
 

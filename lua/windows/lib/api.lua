@@ -42,6 +42,31 @@ function Window:get_wanted_width()
    end
 end
 
+---@return integer height
+function Window:get_wanted_height()
+    if self:get_option('winfixheight') then
+        return self:get_height()
+    end
+
+    local buf = self:get_buffer()
+    local ft = buf:get_option('filetype')
+    local h = config.autoheight.filetype[ft] or config.autoheight.winheight
+
+    if 0 < h and h < 1 then
+        return math.floor(h * vim.o.lines)
+    end
+
+    -- Get buffer line count
+    local line_count = buf:line_count()
+    if line_count == 0 then line_count = 1 end
+
+    if 1 < h and h < 2 then
+        return math.floor(h * line_count)
+    else
+        return math.min(line_count + h, vim.o.lines)
+    end
+end
+
 ---@param l win.Window
 ---@param r win.Window
 function Window.__eq(l, r)
