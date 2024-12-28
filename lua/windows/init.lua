@@ -25,3 +25,4 @@ function M.setup(input)
    require('windows.commands')
 end
 
+return M
