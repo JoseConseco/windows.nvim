@@ -11,14 +11,22 @@ local mt = {}
 ---@field ignore { buftype: table<string, true>, filetype: table<string, true> }
 local config = {
    autowidth = {
-      enable = true, -- false
+      enable = false, -- false
       winwidth = 5,
       filetype = {
          help = 2,
       },
    },
    autoheight = {
+      enable = false, -- false
+      winheight = 5,
+      filetype = {
+         help = 2,
+      },
+   },
+   autoboth = {
       enable = true, -- false
+      winwidth = 5,
       winheight = 5,
       filetype = {
          help = 2,
@@ -64,4 +72,3 @@ end
 setmetatable(config, mt)
 
 return config
-

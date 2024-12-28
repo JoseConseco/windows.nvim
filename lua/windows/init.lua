@@ -10,16 +10,18 @@ function M.setup(input)
                                 config.animation.fps,
                                 config.animation.easing)
    end
+   if config.autoboth.enable then
+      require('windows.autoboth').enable()
+   else
+      if config.autowidth.enable then
+         require('windows.autowidth').enable()
+      end
 
-   if config.autowidth.enable then
-      require('windows.autowidth').enable()
-   end
-
-   if config.autoheight.enable then
-      require('windows.autoheight').enable()
+      if config.autoheight.enable then
+         require('windows.autoheight').enable()
+      end
    end
 
    require('windows.commands')
 end
 
-return M
