@@ -85,6 +85,21 @@ require("windows").setup({
          help = 2,
       },
    },
+   autoheight = {   -- only auto adjust height
+      enable = false,
+      winheight = 5,
+      filetype = {
+         help = 2,
+      },
+   },
+   autoboth = {      -- auto width in both axis
+      enable = false,
+      winwidth = 5,
+      winheight = 5,
+      filetype = {
+         help = 2,
+      },
+   },
    ignore = {				--			  |windows.ignore|
       buftype = { "quickfix" },
       filetype = { "NvimTree", "neo-tree", "undotree", "gundo" }
