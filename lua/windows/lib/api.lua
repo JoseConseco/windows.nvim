@@ -24,10 +24,10 @@ function Window:get_wanted_width()
 
    local buf = self:get_buffer()
    local ft = buf:get_option('filetype')
-   local w = config.autowidth.filetype[ft] or config.autowidth.winwidth
+   local autowidth = config.autowidth.filetype[ft] or config.autowidth.winwidth
 
-   if 0 < w and w < 1 then
-      return math.floor(w * vim.o.columns)
+   if 0 < autowidth and autowidth < 1 then -- use percentage of vim window width
+      return math.floor(autowidth * vim.o.columns)
    end
 
    -- Textwidth
@@ -35,12 +35,14 @@ function Window:get_wanted_width()
    local tw = buf:get_option('textwidth') or 80
    if tw == 0 then tw = 80 end
 
-   if 1 < w and w < 2 then
-      return math.floor(w * tw)
+   if 1 < autowidth and autowidth < 2 then
+      return math.floor(autowidth * tw)
    else
-      return tw + w
+      return tw + autowidth
    end
 end
+
+local golden_ratio = 0.61  -- 1 / 1.61803398875
 
 ---@return integer height
 function Window:get_wanted_height()
@@ -50,20 +52,20 @@ function Window:get_wanted_height()
 
     local buf = self:get_buffer()
     local ft = buf:get_option('filetype')
-    local h = config.autoheight.filetype[ft] or config.autoheight.winheight
+    local autoheight = config.autoheight.filetype[ft] or config.autoheight.winheight
 
-    if 0 < h and h < 1 then
-        return math.floor(h * vim.o.lines)
+    if 0 < autoheight and autoheight < 1 then -- use percentage of vim window height
+        return math.floor(autoheight * vim.o.lines)
     end
 
-    -- Get buffer line count
-    local line_count = buf:line_count()
-    if line_count == 0 then line_count = 1 end
+    local gold_height = golden_ratio * vim.o.lines
+    local line_count = math.min(vim.api.nvim_buf_line_count(buf.id), gold_height)
+    if line_count == 0 then line_count = gold_height end
 
-    if 1 < h and h < 2 then
-        return math.floor(h * line_count)
+    if 1 < autoheight and autoheight < 2 then
+        return math.floor(autoheight * line_count)
     else
-        return math.min(line_count + h, vim.o.lines)
+        return math.min(line_count + autoheight, gold_height)
     end
 end
 

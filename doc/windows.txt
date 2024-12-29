@@ -92,13 +92,9 @@ require("windows").setup({
          help = 2,
       },
    },
-   autoboth = {      -- auto width in both axis
+   autoboth = {      -- scale both axis.
       enable = false,
-      winwidth = 5,
-      winheight = 5,
-      filetype = {
-         help = 2,
-      },
+      -- Uses: winwidth, winheight, filetype - from autowidth/autoheight
    },
    ignore = {				--			  |windows.ignore|
       buftype = { "quickfix" },

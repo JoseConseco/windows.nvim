@@ -11,26 +11,21 @@ local mt = {}
 ---@field ignore { buftype: table<string, true>, filetype: table<string, true> }
 local config = {
    autowidth = {
-      enable = false, -- false
+      enable = false,
       winwidth = 5,
       filetype = {
          help = 2,
       },
    },
    autoheight = {
-      enable = false, -- false
+      enable = false,
       winheight = 5,
       filetype = {
-         help = 2,
+         help = 1,
       },
    },
    autoboth = {
-      enable = true, -- false
-      winwidth = 5,
-      winheight = 5,
-      filetype = {
-         help = 2,
-      },
+      enable = true,
    },
    ignore = {
       buftype = { 'quickfix' },
