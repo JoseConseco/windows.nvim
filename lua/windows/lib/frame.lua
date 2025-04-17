@@ -93,8 +93,15 @@ function Frame:initialize(layout, id, parent)
 end
 
 ---Calculate frame widths for autowidth functionality.
----@param curwinLeaf win.Frame
+---@param curwinLeaf win.Frame|nil
 function Frame:autowidth(curwinLeaf)
+   -- Add a guard to handle nil curwinLeaf
+   if not curwinLeaf then
+      -- If the current window leaf is nil, fall back to equalize_windows
+      -- self:equalize_windows(true, false)
+      return
+   end
+
    local curwin = curwinLeaf.win
 
    local curwinFrame = self:get_child_with_frame(curwinLeaf)
@@ -191,8 +198,15 @@ function Frame:autowidth(curwinLeaf)
 end
 
 ---Calculate frame heights for autoheight functionality.
----@param curwinLeaf win.Frame
+---@param curwinLeaf win.Frame|nil
 function Frame:autoheight(curwinLeaf)
+   -- Add a guard to handle nil curwinLeaf
+   if not curwinLeaf then
+      -- If the current window leaf is nil, fall back to equalize_windows
+      -- self:equalize_windows(false, true)
+      return
+   end
+
    local curwin = curwinLeaf.win
 
    local curwinFrame = self:get_child_with_frame(curwinLeaf)
