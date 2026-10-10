@@ -36,7 +36,7 @@ Everywhere where in the code you see something like: "n - 1", "-n + 1" or "-1",
 this is a subtraction of the width of separators between children frames from
 frame width.
 --]]
-local class = require('middleclass')
+local class = require('windows.lib.class')
 local Window = require('windows.lib.api').Window
 local round = require('windows.lib.util').round
 local list_extend = vim.list_extend

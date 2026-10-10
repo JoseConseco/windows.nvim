@@ -1,5 +1,7 @@
 local calc_layout = require('windows.calculate-layout')
 local autowidth = require('windows.autowidth')
+local autoheight = require('windows.autoheight')
+local autoboth = require('windows.autoboth')
 local config = require('windows.config')
 local cache = require('windows.cache')
 local Window = require('windows.lib.api').Window
@@ -12,6 +14,18 @@ local command = api.nvim_create_user_command
 local augroup_name = 'windows.maximize'
 local augroup
 local M = {}
+
+---Cancel pending automatic resizing requests of all auto* modules.
+local function cancel_resizing_requests()
+   autowidth.resizing_request = false
+   autoheight.resizing_request = false
+   autoboth.resizing_request = false
+end
+
+---Is automatic width adjustment active (so it handles restoring on its own)?
+local function is_autowidth_active()
+   return config.autowidth.enable or config.autoboth.enable
+end
 
 ---@type win.ResizeWindowsAnimated?
 local animation
@@ -62,7 +76,7 @@ function M.maximize()
    local curwin = Window()
    if curwin:is_floating() then return end
 
-   autowidth.resizing_request = false
+   cancel_resizing_requests()
 
    local wd, hd
 
@@ -70,7 +84,7 @@ function M.maximize()
       wd = cache.maximized.width or {}
       hd = cache.maximized.height or {}
       cache.maximized = nil
-      if not config.autowidth.enable then
+      if not is_autowidth_active() then
          api.nvim_clear_autocmds({ group = augroup })
       end
    else
@@ -92,7 +106,7 @@ function M.maximize()
          }
       end
 
-      if not config.autowidth.enable or tbl_is_empty(wd) then
+      if not is_autowidth_active() or tbl_is_empty(wd) then
          setup_autocmds()
       end
    end
@@ -166,12 +180,12 @@ function M.maximize_horizontally()
          }
       end
 
-      if not config.autowidth.enable then
+      if not is_autowidth_active() then
          setup_autocmds()
       end
    end
 
-   autowidth.resizing_request = false
+   cancel_resizing_requests()
 
    if animation then
       animation:load(winsdata)
@@ -187,7 +201,7 @@ function M.equalize()
    if Window():is_floating() then return end
 
    cache.maximized = nil
-   autowidth.resizing_request = false
+   cancel_resizing_requests()
 
    local winsdata = calc_layout.equalize_wins(true, true)
    if tbl_is_empty(winsdata) then return end

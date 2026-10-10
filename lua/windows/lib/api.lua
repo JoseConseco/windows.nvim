@@ -1,4 +1,4 @@
-local class = require('middleclass')
+local class = require('windows.lib.class')
 local config = require('windows.config')
 local api = vim.api
 local fn = vim.fn
@@ -58,9 +58,8 @@ function Window:get_wanted_height()
         return math.floor(autoheight * vim.o.lines)
     end
 
-    local gold_height = golden_ratio * vim.o.lines
+    local gold_height = math.floor(golden_ratio * vim.o.lines)
     local line_count = math.min(vim.api.nvim_buf_line_count(buf.id), gold_height)
-    if line_count == 0 then line_count = gold_height end
 
     if 1 < autoheight and autoheight < 2 then
         return math.floor(autoheight * line_count)
@@ -110,12 +109,12 @@ end
 
 ---@param name string
 function Window:get_option(name)
-   return api.nvim_win_get_option(self.id, name)
+   return api.nvim_get_option_value(name, { win = self.id })
 end
 
 ---@param name string
 function Window:set_option(name, value)
-   return api.nvim_win_set_option(self.id, name, value)
+   return api.nvim_set_option_value(name, value, { win = self.id })
 end
 
 ---Temporary change window scoped option.
@@ -124,9 +123,9 @@ end
 function Window:temp_change_option(name, value)
    self._original_options = self._original_options or {}
    if not self._original_options[name] then
-      self._original_options[name] = api.nvim_win_get_option(self.id, name)
+      self._original_options[name] = api.nvim_get_option_value(name, { win = self.id })
    end
-   api.nvim_win_set_option(self.id, name, value)
+   api.nvim_set_option_value(name, value, { win = self.id })
 end
 
 ---Restore all option change with `temp_change_option` method.
@@ -134,7 +133,7 @@ function Window:restore_changed_options()
    if self:is_valid() then
       if self._original_options then
          for name, value in pairs(self._original_options) do
-            api.nvim_win_set_option(self.id, name, value)
+            api.nvim_set_option_value(name, value, { win = self.id })
          end
       end
    end
@@ -196,7 +195,7 @@ end
 
 ---@param name string
 function Buffer:get_option(name)
-   return api.nvim_buf_get_option(self.id, name)
+   return api.nvim_get_option_value(name, { buf = self.id })
 end
 
 --------------------------------------------------------------------------------

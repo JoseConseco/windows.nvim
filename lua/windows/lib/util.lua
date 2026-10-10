@@ -9,7 +9,9 @@ local ceil = math.ceil
 function util.megre_config(default, input)
    local r = default
    for key, value in pairs(input) do
-      if type(value) == 'table' then
+      if type(value) == 'table' and type(r[key]) == 'table'
+         and not (vim.islist or vim.tbl_islist)(value)
+      then
          r[key] = util.megre_config(r[key], value)
       else
          r[key] = input[key]
@@ -65,7 +67,7 @@ end
 ---@param start? number some time point in the past
 ---@return number time
 function util.time(start)
-   local time = vim.loop.hrtime() / 1e6
+   local time = (vim.uv or vim.loop).hrtime() / 1e6
    if start then
       time = time - start
    end
@@ -76,9 +78,9 @@ function util.timeit(fun, n)
    local times = {}
    local start, finish
    for _ = 1, n or 100 do
-      start = vim.loop.hrtime()
+      start = (vim.uv or vim.loop).hrtime()
       fun()
-      finish = vim.loop.hrtime()
+      finish = (vim.uv or vim.loop).hrtime()
       times[#times+1] = (finish - start) / 1e3
    end
    local N = #times
@@ -91,7 +93,7 @@ function util.timeit(fun, n)
 
    local S = 0
    for _, t in ipairs(times) do
-      S = S + math.pow(t - t_mean, 2)
+      S = S + (t - t_mean) ^ 2
    end
    S = math.sqrt(S / (N - 1))
 

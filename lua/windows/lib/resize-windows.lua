@@ -36,12 +36,14 @@ end
 ---@param winsdata win.WinResizeData[]
 function M.resize_windows(winsdata)
    for _, d in ipairs(winsdata) do
+      if not d.win:is_valid() then goto continue end
       if d.width then
          d.win:set_width(d.width)
       end
       if d.height then
          d.win:set_height(d.height)
       end
+      ::continue::
    end
 end
 

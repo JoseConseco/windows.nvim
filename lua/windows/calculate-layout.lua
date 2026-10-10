@@ -17,6 +17,7 @@ function M.autowidth(curwin)
       and not curwin:is_ignored()
    then
       local curwinLeaf = topFrame:find_window(curwin)
+      if not curwinLeaf then return {} end
       local topFrame_width = topFrame:get_width()
       local curwin_wanted_width = curwin:get_wanted_width()
       local topFrame_wanted_width = topFrame:get_min_width(curwin, curwin_wanted_width)
@@ -49,6 +50,7 @@ function M.autoheight(curwin)
       and not curwin:is_ignored()
    then
       local curwinLeaf = topFrame:find_window(curwin)
+      if not curwinLeaf then return {} end
       local topFrame_height = topFrame:get_height()
       local curwin_wanted_height = curwin:get_wanted_height()
       local topFrame_wanted_height = topFrame:get_min_height(curwin, curwin_wanted_height)
@@ -102,6 +104,7 @@ function M.autoboth(curwin)
       and not curwin:is_ignored()
    then
       local curwinLeaf = topFrame:find_window(curwin)
+      if not curwinLeaf then return {} end
       local topFrame_width = topFrame:get_width()
       local topFrame_height = topFrame:get_height()
       local curwin_wanted_width = curwin:get_wanted_width()
