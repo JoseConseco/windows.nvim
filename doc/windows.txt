@@ -88,30 +88,30 @@ the current ones. Enable |windows.autowidth| and/or |windows.autoheight|;
 with both enabled the window is resized in both axes at once.
 >
 require("windows").setup({
-   autowidth = {			--		       |windows.autowidth|
-      enable = true,
-      winwidth = 5,			--		        |windows.winwidth|
-      filetype = {			--	      |windows.autowidth.filetype|
+   autowidth = {
+      enable = true,       -- resize the current window's width automatically
+      winwidth = 5,        -- wanted width: 0<n<1 fraction of screen, 1<n<2 fraction of 'textwidth', else 'textwidth' + n
+      filetype = {         -- per-filetype override of `winwidth`
          help = 2,
       },
    },
-   autoheight = {   -- only auto adjust height
-      enable = false,
-      winheight = 5,
-      filetype = {
+   autoheight = {
+      enable = false,      -- resize the current window's height automatically
+      winheight = 5,       -- wanted height: 0<n<1 fraction of screen, 1<n<2 fraction of buffer lines, else lines + n (max 61% of screen)
+      filetype = {         -- per-filetype override of `winheight`
          help = 2,
       },
    },
-   ignore = {				--			  |windows.ignore|
-      buftype = { "quickfix" },
-      filetype = { "NvimTree", "neo-tree", "undotree", "gundo" }
+   ignore = {
+      buftype = { "quickfix" },                                    -- buffer types never resized
+      filetype = { "NvimTree", "neo-tree", "undotree", "gundo" },  -- filetypes never resized
    },
    animation = {
-      enable = true,
-      duration = 300,
-      fps = 30,
-      easing = "in_out_sine"
-   }
+      enable = true,       -- animate resizing (needs animation.nvim)
+      duration = 300,      -- animation length in milliseconds
+      fps = 30,            -- animation frames per second
+      easing = "in_out_sine", -- easing function name from animation.nvim
+   },
 })
 --------------------------------------------------------------------------------
 

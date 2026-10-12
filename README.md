@@ -1,6 +1,6 @@
 # windows.nvim
 
-- Automatically expand width of the current window;
+- Automatically expand width and/or height of the current window;
 - Maximizes and restores the current window.
 
 And all this with nice animations!
@@ -50,7 +50,41 @@ plugin manager using next snippet:
 
 ## Configuration
 
-Read about plugins configuration in the [documentation](https://github.com/anuvyklack/windows.nvim/blob/main/doc/windows.txt).
+Default settings (every option is optional; `setup()` merges them into these):
+
+```lua
+require("windows").setup({
+   autowidth = {
+      enable = true,       -- resize the current window's width automatically
+      winwidth = 5,        -- wanted width: 0<n<1 fraction of screen, 1<n<2 fraction of 'textwidth', else 'textwidth' + n
+      filetype = {         -- per-filetype override of `winwidth`
+         help = 2,
+      },
+   },
+   autoheight = {
+      enable = false,      -- resize the current window's height automatically
+      winheight = 5,       -- wanted height: 0<n<1 fraction of screen, 1<n<2 fraction of buffer lines, else lines + n (max 61% of screen)
+      filetype = {         -- per-filetype override of `winheight`
+         help = 2,
+      },
+   },
+   ignore = {
+      buftype = { "quickfix" },                                    -- buffer types never resized
+      filetype = { "NvimTree", "neo-tree", "undotree", "gundo" },  -- filetypes never resized
+   },
+   animation = {
+      enable = true,       -- animate resizing (needs animation.nvim)
+      duration = 300,      -- animation length in milliseconds
+      fps = 30,            -- animation frames per second
+      easing = "in_out_sine", -- easing function name from animation.nvim
+   },
+})
+```
+
+Enable both `autowidth` and `autoheight` to resize in both axes at once.
+The old `autoboth` option was removed; setting it still works but warns.
+
+Read more in the [documentation](https://github.com/anuvyklack/windows.nvim/blob/main/doc/windows.txt).
 
 ## Commands
 
@@ -81,6 +115,12 @@ Read about plugins configuration in the [documentation](https://github.com/anuvy
   `:WindowsToggleAutowidth`
 
   Enable, disable or toggle auto-width feature.
+
+- `:WindowsEnableAutoheight`  
+  `:WindowsDisableAutoheight`  
+  `:WindowsToggleAutoheight`
+
+  Enable, disable or toggle auto-height feature.
 
 ## Keymapings
 
