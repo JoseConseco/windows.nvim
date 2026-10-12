@@ -108,6 +108,13 @@ local function prepare_cursor(animation)
    end
 end
 
+---Request a layout recalculation for the current window.
+function M.request_layout()
+   if not M.is_enabled() then return end
+   M.resizing_request = true
+   vim.schedule(setup_layout)
+end
+
 ---Register the autocommands (idempotent).
 function M.enable()
    api.nvim_clear_autocmds({ group = augroup })
@@ -161,6 +168,23 @@ function M.enable()
    autocmd('WinNew', { group = augroup, callback = function()
       new_window = true
    end })
+
+   -- A plugin can mark a window as fixed-size right after creating it (e.g.
+   -- the Diffview panels), when a resize calculated for it as a regular window
+   -- may be already in flight. Such a stale layout must not be applied: abort
+   -- the animation and calculate the layout again with the new constraints.
+   autocmd('OptionSet', {
+      group = augroup,
+      pattern = { 'winfixwidth', 'winfixheight' },
+      callback = function()
+         if vim.v.option_new == vim.v.option_old then return end
+         local animation = get_animation()
+         if animation and animation:is_running() then
+            animation:finish()
+         end
+         M.request_layout()
+      end
+   })
 
    if config.animation.enable then
       autocmd('WinLeave', { group = augroup, callback = function()

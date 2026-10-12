@@ -208,6 +208,36 @@ test('fixed-height bottom panel does not maximize width (DiffviewFileHistory lay
    assert(w >= vim.o.winminwidth, 'window narrower than winminwidth')
 end)
 
+test('window made fixed-size mid-animation does not get a stale layout (Diffview panel)', function()
+   -- A panel is created and focused as a regular window, so a resize that gives
+   -- it the golden-ratio height starts. Then it becomes 'winfixheight' with a
+   -- small height, like Diffview does. The in-flight animation must not undo it.
+   reset_windows()
+   require('windows').setup({
+      autowidth = { enable = true },
+      autoheight = { enable = true, winheight = 0.62 },
+      animation = { enable = true, duration = 300 },
+   })
+   vim.cmd('vsplit')
+   wait_animation()
+   vim.cmd('botright split | enew')
+   vim.wait(30) -- the scheduled resize has started animating
+   local panel = vim.api.nvim_get_current_win()
+   -- Like Diffview, change the options without firing any event.
+   vim.cmd('noautocmd lua vim.api.nvim_set_option_value("winfixheight", true, { win = ' .. panel .. ' })')
+   vim.cmd('noautocmd lua vim.api.nvim_win_set_height(' .. panel .. ', 8)')
+   wait_animation()
+   wait_animation()
+   local h = vim.api.nvim_win_get_height(panel)
+   eq(8, h, 'panel height')
+   local total = vim.o.lines - vim.o.cmdheight - 1
+   for _, w in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+      if w ~= panel then
+         eq(total - 8 - 1, vim.api.nvim_win_get_height(w), 'diff window height')
+      end
+   end
+end)
+
 --------------------------------------------------------------------------------
 
 print(failed == 0 and 'ALL TESTS PASSED' or (failed .. ' TEST(S) FAILED'))

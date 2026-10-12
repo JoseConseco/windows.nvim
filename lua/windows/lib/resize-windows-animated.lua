@@ -55,6 +55,20 @@ function ResizeWindowsAnimated:restore_virtualedit()
    self.virtualedit = nil
 end
 
+---A string that describes which windows of the current tab page have fixed
+---size. If it changes during the animation, the layout the animation was
+---calculated for is stale.
+---@return string
+local function fixed_size_signature()
+   local parts = {}
+   for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
+      local wfw = vim.api.nvim_get_option_value('winfixwidth', { win = win })
+      local wfh = vim.api.nvim_get_option_value('winfixheight', { win = win })
+      parts[#parts + 1] = win .. (wfw and 'w' or '') .. (wfh and 'h' or '')
+   end
+   return table.concat(parts, ',')
+end
+
 ---@param winsdata win.WinResizeData[]
 function ResizeWindowsAnimated:load(winsdata)
    if self:is_running() then self:finish() end
@@ -81,12 +95,25 @@ function ResizeWindowsAnimated:load(winsdata)
    end
 
    self.curwin = Window(0)
+   self.signature = fixed_size_signature()
 
    if winsaveview().leftcol == 0 then
       self.cursor_virtcol = cache.cursor_virtcol[self.curwin]
    end
 
    self:set_callback(function(fraction)
+      -- Some plugins (e.g. Diffview) make a window fixed-size right after
+      -- creating it, without firing any event. The resize calculated before
+      -- that is stale: abort it and ask for a fresh calculation.
+      if fixed_size_signature() ~= self.signature then
+         self:finish()
+         vim.schedule(function()
+            local auto_resize = package.loaded['windows.auto-resize']
+            if auto_resize then auto_resize.request_layout() end
+         end)
+         return true
+      end
+
       for _, d in ipairs(self.winsdata) do
          if not d.win:is_valid() then goto continue end
          if d.delta_width then
