@@ -63,12 +63,6 @@ WindowsDisableAutoheight
 WindowsToggleAutoheight
 			Enable, disable or toggle auto-height feature.
 
-WindowsEnableAutoboth
-WindowsDisableAutoboth
-WindowsToggleAutoboth
-			Enable, disable or toggle resizing in both axis.
-			When enabled, it takes precedence over autowidth and
-			autoheight.
 
 --------------------------------------------------------------------------------
 KEYMAPINGS
@@ -90,7 +84,8 @@ CONFIGURATION
 DEFAULT SETTINGS
 --------------------------------------------------------------------------------
 `setup()` can be called again later with new options; they are merged into
-the current ones and the enabled modules are reapplied.
+the current ones. Enable |windows.autowidth| and/or |windows.autoheight|;
+with both enabled the window is resized in both axes at once.
 >
 require("windows").setup({
    autowidth = {			--		       |windows.autowidth|
@@ -106,10 +101,6 @@ require("windows").setup({
       filetype = {
          help = 2,
       },
-   },
-   autoboth = {      -- scale both axis.
-      enable = false,
-      -- Uses: winwidth, winheight, filetype - from autowidth/autoheight
    },
    ignore = {				--			  |windows.ignore|
       buftype = { "quickfix" },

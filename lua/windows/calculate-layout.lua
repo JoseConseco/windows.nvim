@@ -2,70 +2,60 @@ local Frame = require('windows.lib.frame')
 local merge_resize_data = require('windows.lib.resize-windows').merge_resize_data
 local M = {}
 
----Calculate layout for autowidth
+---Calculate the automatic layout for the current window on the requested
+---axes. Each axis is decided on its own: a layout that does not fit
+---vertically (e.g. a fixed-height panel at the bottom) must not cause the
+---window to be maximized horizontally as well.
 ---@param curwin win.Window
+---@param do_width boolean
+---@param do_height boolean
 ---@return win.WinResizeData[]
-function M.autowidth(curwin)
+function M.auto(curwin, do_width, do_height)
+   assert(do_width or do_height, 'No axis has been requested')
    local topFrame = Frame() ---@type win.Frame
    if topFrame.type == 'leaf' then
       return {}
    end
 
-   if curwin:is_valid()
-      and not curwin:is_floating()
-      and not curwin:get_option('winfixwidth')
-      and not curwin:is_ignored()
-   then
-      local curwinLeaf = topFrame:find_window(curwin)
+   local curwinLeaf
+   if curwin:is_valid() and not curwin:is_floating() and not curwin:is_ignored() then
+      curwinLeaf = topFrame:find_window(curwin)
       if not curwinLeaf then return {} end
-      local topFrame_width = topFrame:get_width()
-      local curwin_wanted_width = curwin:get_wanted_width()
-      local topFrame_wanted_width = topFrame:get_min_width(curwin, curwin_wanted_width)
+   end
 
-      if topFrame_wanted_width > topFrame_width then
-         topFrame:maximize_window(curwinLeaf, true, false)
+   if do_width then
+      if curwinLeaf and not curwin:get_option('winfixwidth') then
+         local wanted = topFrame:get_min_width(curwin, curwin:get_wanted_width())
+         if wanted > topFrame:get_width() then
+            topFrame:maximize_window(curwinLeaf, true, false)
+         else
+            topFrame:autowidth(curwinLeaf)
+         end
       else
-         topFrame:autowidth(curwinLeaf)
+         topFrame:equalize_windows(true, false)
       end
-   else
-      topFrame:equalize_windows(true, false)
    end
 
-   local data = topFrame:get_data_for_width_resizing()
-   return data
-end
-
----Calculate layout for autoheight
----@param curwin win.Window
----@return win.WinResizeData[]
-function M.autoheight(curwin)
-   local topFrame = Frame() ---@type win.Frame
-   if topFrame.type == 'leaf' then
-      return {}
-   end
-
-   if curwin:is_valid()
-      and not curwin:is_floating()
-      and not curwin:get_option('winfixheight')
-      and not curwin:is_ignored()
-   then
-      local curwinLeaf = topFrame:find_window(curwin)
-      if not curwinLeaf then return {} end
-      local topFrame_height = topFrame:get_height()
-      local curwin_wanted_height = curwin:get_wanted_height()
-      local topFrame_wanted_height = topFrame:get_min_height(curwin, curwin_wanted_height)
-
-      if topFrame_wanted_height > topFrame_height then
-         topFrame:maximize_window(curwinLeaf, false, true)
+   if do_height then
+      if curwinLeaf and not curwin:get_option('winfixheight') then
+         local wanted = topFrame:get_min_height(curwin, curwin:get_wanted_height())
+         if wanted > topFrame:get_height() then
+            topFrame:maximize_window(curwinLeaf, false, true)
+         else
+            topFrame:autoheight(curwinLeaf)
+         end
       else
-         topFrame:autoheight(curwinLeaf)
+         topFrame:equalize_windows(false, true)
       end
-   else
-      topFrame:equalize_windows(false, true)
    end
 
-   local data = topFrame:get_data_for_height_resizing()
-   return data
+   if do_width and not do_height then
+      return topFrame:get_data_for_width_resizing()
+   elseif do_height and not do_width then
+      return topFrame:get_data_for_height_resizing()
+   end
+   return merge_resize_data(topFrame:get_data_for_width_resizing(),
+                            topFrame:get_data_for_height_resizing())
 end
 
 ---@param win win.Window
@@ -80,51 +70,13 @@ function M.maximize_win(win, do_width, do_height)
    end
 
    local winLeaf = topFrame:find_window(win)
+   if not winLeaf then return {}, {} end
    topFrame:maximize_window(winLeaf, do_width, do_height)
 
    local width_data = topFrame:get_data_for_width_resizing()
    local height_data = topFrame:get_data_for_height_resizing()
 
    return width_data, height_data
-end
-
----Calculate layout for autoboth (width and height)
----@param curwin win.Window
----@return win.WinResizeData[]
-function M.autoboth(curwin)
-   local topFrame = Frame() ---@type win.Frame
-   if topFrame.type == 'leaf' then
-      return {}
-   end
-
-   if curwin:is_valid()
-      and not curwin:is_floating()
-      and not curwin:get_option('winfixwidth')
-      and not curwin:get_option('winfixheight')
-      and not curwin:is_ignored()
-   then
-      local curwinLeaf = topFrame:find_window(curwin)
-      if not curwinLeaf then return {} end
-      local topFrame_width = topFrame:get_width()
-      local topFrame_height = topFrame:get_height()
-      local curwin_wanted_width = curwin:get_wanted_width()
-      local curwin_wanted_height = curwin:get_wanted_height()
-      local topFrame_wanted_width = topFrame:get_min_width(curwin, curwin_wanted_width)
-      local topFrame_wanted_height = topFrame:get_min_height(curwin, curwin_wanted_height)
-
-      if topFrame_wanted_width > topFrame_width or topFrame_wanted_height > topFrame_height then
-         topFrame:maximize_window(curwinLeaf, true, true)
-      else
-         topFrame:autowidth(curwinLeaf)
-         topFrame:autoheight(curwinLeaf)
-      end
-   else
-      topFrame:equalize_windows(true, true)
-   end
-
-   local width_data = topFrame:get_data_for_width_resizing()
-   local height_data = topFrame:get_data_for_height_resizing()
-   return merge_resize_data(width_data, height_data)
 end
 
 ---@param do_width boolean

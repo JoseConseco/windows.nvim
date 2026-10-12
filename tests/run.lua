@@ -68,34 +68,40 @@ test('config: unknown easing disables animation with a warning', function()
    eq('function', type(config.animation.easing))
 end)
 
-test('setup: autoboth overrides autowidth/autoheight with a warning', function()
+test('setup: legacy autoboth option enables both axes with a warning', function()
    local notified
    local notify = vim.notify
    vim.notify = function(msg) notified = msg end
-   require('windows').setup({
-      autowidth = { enable = true },
-      autoboth = { enable = true },
-   })
+   require('windows').setup({ autoboth = { enable = true } })
    vim.notify = notify
    assert(notified and notified:find('autoboth'), 'no warning was shown')
-   eq(0, autocmd_count('windows.autowidth'))
-   assert(autocmd_count('windows.autoboth') > 0, 'autoboth not enabled')
+   local config = require('windows.config')
+   eq(true, config.autowidth.enable)
+   eq(true, config.autoheight.enable)
+   eq(nil, config.autoboth)
+   assert(autocmd_count('windows.auto-resize') > 0, 'auto-resize not enabled')
 end)
 
 test('setup: can be called again and switches modes', function()
-   require('windows').setup({ autoboth = { enable = false }, autowidth = { enable = true } })
-   eq(0, autocmd_count('windows.autoboth'))
-   assert(autocmd_count('windows.autowidth') > 0, 'autowidth not enabled')
+   require('windows').setup({ autowidth = { enable = false }, autoheight = { enable = false } })
+   eq(0, autocmd_count('windows.auto-resize'))
+   require('windows').setup({ autowidth = { enable = true } })
+   assert(autocmd_count('windows.auto-resize') > 0, 'auto-resize not enabled')
 end)
 
 test('enable twice does not duplicate autocmds', function()
-   local autowidth = require('windows.autowidth')
-   autowidth.enable()
-   local n = autocmd_count('windows.autowidth')
-   autowidth.enable()
-   eq(n, autocmd_count('windows.autowidth'))
+   local auto_resize = require('windows.auto-resize')
+   auto_resize.enable()
+   local n = autocmd_count('windows.auto-resize')
+   auto_resize.enable()
+   eq(n, autocmd_count('windows.auto-resize'))
    vim.cmd('WindowsEnableAutowidth')
-   eq(n, autocmd_count('windows.autowidth'))
+   eq(n, autocmd_count('windows.auto-resize'))
+   vim.cmd('WindowsDisableAutowidth')
+   eq(0, autocmd_count('windows.auto-resize'))
+   vim.cmd('WindowsToggleAutoheight')
+   assert(autocmd_count('windows.auto-resize') > 0, 'autoheight toggle did not enable')
+   vim.cmd('WindowsDisableAutoheight')
 end)
 
 test('wanted height is an integer', function()
@@ -104,13 +110,12 @@ test('wanted height is an integer', function()
    eq(h, math.floor(h))
 end)
 
-for _, mode in ipairs({ 'autowidth', 'autoheight', 'autoboth' }) do
+for _, mode in ipairs({ 'width', 'height', 'both' }) do
    test(mode .. ': split, switch, maximize, equalize, close do not error', function()
       reset_windows()
       require('windows').setup({
-         autowidth = { enable = mode == 'autowidth' },
-         autoheight = { enable = mode == 'autoheight' },
-         autoboth = { enable = mode == 'autoboth' },
+         autowidth = { enable = mode ~= 'height' },
+         autoheight = { enable = mode ~= 'width' },
       })
       vim.cmd('vsplit | split | enew')
       wait_animation()
@@ -131,7 +136,7 @@ end
 
 test('closed window during animation does not error', function()
    reset_windows()
-   require('windows').setup({ autowidth = { enable = true }, autoboth = { enable = false } })
+   require('windows').setup({ autowidth = { enable = true }, autoheight = { enable = false } })
    vim.cmd('vsplit | vsplit')
    vim.cmd('wincmd w')
    vim.wait(20) -- let the scheduled resize start the animation
@@ -142,7 +147,7 @@ end)
 
 test('virtualedit is restored after the animation', function()
    reset_windows()
-   require('windows').setup({ autowidth = { enable = true }, autoboth = { enable = false } })
+   require('windows').setup({ autowidth = { enable = true }, autoheight = { enable = false } })
    vim.api.nvim_set_option_value('virtualedit', '', { win = 0 })
    vim.cmd('vsplit')
    wait_animation()
@@ -158,7 +163,7 @@ test('cursor is not moved while not in normal mode', function()
    -- ':startinsert' has no effect in `nvim -l` (no main loop), so stub the
    -- mode instead and check that no normal mode keys are fed.
    reset_windows()
-   require('windows').setup({ autowidth = { enable = true }, autoboth = { enable = false } })
+   require('windows').setup({ autowidth = { enable = true }, autoheight = { enable = false } })
    vim.cmd('vsplit')
    wait_animation()
    local get_mode, feedkeys = vim.api.nvim_get_mode, vim.api.nvim_feedkeys
@@ -179,6 +184,28 @@ test('cursor is not moved while not in normal mode', function()
    wait_animation()
    vim.api.nvim_feedkeys = feedkeys
    assert(fed > 0, 'no keys were fed in normal mode')
+end)
+
+test('fixed-height bottom panel does not maximize width (DiffviewFileHistory layout)', function()
+   -- Layout:  [ A | B ]  over a 'winfixheight' panel taller than what fits.
+   reset_windows()
+   require('windows').setup({
+      autowidth = { enable = true, winwidth = 1.5 },
+      autoheight = { enable = true, winheight = 0.62 },
+   })
+   vim.cmd('botright split')
+   vim.api.nvim_set_option_value('winfixheight', true, { win = 0 })
+   vim.api.nvim_win_set_height(0, 32)
+   vim.cmd('wincmd k')
+   vim.cmd('vsplit')
+   wait_animation()
+   vim.cmd('wincmd l')
+   wait_animation()
+   local cur = vim.api.nvim_get_current_win()
+   local w = vim.api.nvim_win_get_width(cur)
+   local wanted = require('windows.lib.api').Window(cur):get_wanted_width()
+   assert(w <= wanted + 1, ('window was maximized: width %d, wanted %d'):format(w, wanted))
+   assert(w >= vim.o.winminwidth, 'window narrower than winminwidth')
 end)
 
 --------------------------------------------------------------------------------

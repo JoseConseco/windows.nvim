@@ -23,9 +23,6 @@ local config = {
          help = 1,
       },
    },
-   autoboth = {
-      enable = false,
-   },
    ignore = {
       buftype = { 'quickfix' },
       filetype = {
@@ -47,7 +44,22 @@ local config = {
 ---@param input? table
 ---@return win.Config
 function mt:__call(input)
-   util.megre_config(config, input or {})
+   input = input or {}
+
+   -- Backward compatibility: `autoboth` has been removed, enabling both
+   -- `autowidth` and `autoheight` gives the same result.
+   if type(input.autoboth) == 'table' then
+      if input.autoboth.enable then
+         input.autowidth = vim.tbl_extend('force', input.autowidth or {}, { enable = true })
+         input.autoheight = vim.tbl_extend('force', input.autoheight or {}, { enable = true })
+      end
+      input.autoboth = nil
+      vim.notify('[windows.nvim] the "autoboth" option has been removed; '
+                 .. 'enable both "autowidth" and "autoheight" instead',
+                 vim.log.levels.WARN)
+   end
+
+   util.megre_config(config, input)
    util.convert_list_to_set(config.ignore.buftype)
    util.convert_list_to_set(config.ignore.filetype)
 

@@ -1,7 +1,5 @@
 local calc_layout = require('windows.calculate-layout')
-local autowidth = require('windows.autowidth')
-local autoheight = require('windows.autoheight')
-local autoboth = require('windows.autoboth')
+local auto_resize = require('windows.auto-resize')
 local config = require('windows.config')
 local cache = require('windows.cache')
 local Window = require('windows.lib.api').Window
@@ -17,14 +15,12 @@ local M = {}
 
 ---Cancel pending automatic resizing requests of all auto* modules.
 local function cancel_resizing_requests()
-   autowidth.resizing_request = false
-   autoheight.resizing_request = false
-   autoboth.resizing_request = false
+   auto_resize.resizing_request = false
 end
 
 ---Is automatic width adjustment active (so it handles restoring on its own)?
 local function is_autowidth_active()
-   return config.autowidth.enable or config.autoboth.enable
+   return config.autowidth.enable
 end
 
 ---@type win.ResizeWindowsAnimated?
