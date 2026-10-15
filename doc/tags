@@ -1,0 +1,10 @@
+windows.autowidth	windows.txt	/*windows.autowidth*
+windows.autowidth.filetype	windows.txt	/*windows.autowidth.filetype*
+windows.commands	windows.txt	/*windows.commands*
+windows.equalize	windows.txt	/*windows.equalize*
+windows.ignore	windows.txt	/*windows.ignore*
+windows.maximize	windows.txt	/*windows.maximize*
+windows.maximize-horizontally	windows.txt	/*windows.maximize-horizontally*
+windows.maximize-vertically	windows.txt	/*windows.maximize-vertically*
+windows.nvim	windows.txt	/*windows.nvim*
+windows.winwidth	windows.txt	/*windows.winwidth*

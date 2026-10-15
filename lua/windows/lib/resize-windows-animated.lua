@@ -62,9 +62,13 @@ end
 local function fixed_size_signature()
    local parts = {}
    for _, win in ipairs(vim.api.nvim_tabpage_list_wins(0)) do
-      local wfw = vim.api.nvim_get_option_value('winfixwidth', { win = win })
-      local wfh = vim.api.nvim_get_option_value('winfixheight', { win = win })
-      parts[#parts + 1] = win .. (wfw and 'w' or '') .. (wfh and 'h' or '')
+      -- Floating windows (e.g. cursor animations) come and go all the time and
+      -- are not part of the layout.
+      if vim.api.nvim_win_get_config(win).relative == '' then
+         local wfw = vim.api.nvim_get_option_value('winfixwidth', { win = win })
+         local wfh = vim.api.nvim_get_option_value('winfixheight', { win = win })
+         parts[#parts + 1] = win .. (wfw and 'w' or '') .. (wfh and 'h' or '')
+      end
    end
    return table.concat(parts, ',')
 end
